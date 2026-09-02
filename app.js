@@ -59,7 +59,20 @@ function defaultState() {
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORE_KEY));
-    if (saved?.tasks && saved?.goals && saved?.settings) return saved;
+    if (saved?.tasks && saved?.goals && saved?.settings) {
+      let migrated = false;
+      saved.goals.forEach((goal) => {
+        goal.steps.forEach((step) => {
+          if (step.taskId) return;
+          const taskId = uid('task');
+          saved.tasks.push({ id: taskId, title: step.name, date: dateKey(new Date()), time: '18:00', priority: 'normal', duration: 30, emoji: goal.emoji, goalIds: [goal.id], completedAt: step.done ? new Date().toISOString() : null, createdAt: Date.now() });
+          step.taskId = taskId;
+          migrated = true;
+        });
+      });
+      if (migrated) localStorage.setItem(STORE_KEY, JSON.stringify(saved));
+      return saved;
+    }
   } catch (_) { /* use fresh state */ }
   return defaultState();
 }
@@ -108,9 +121,10 @@ function taskRow(task, options = {}) {
 
 function goalProgress(goal) {
   const linked = state.tasks.filter((task) => task.goalIds.includes(goal.id));
-  const completeSteps = goal.steps.filter((step) => step.done).length;
+  const manualSteps = goal.steps.filter((step) => !step.taskId);
+  const completeSteps = manualSteps.filter((step) => step.done).length;
   const completedTasks = linked.filter((task) => task.completedAt).length;
-  const total = goal.steps.length + linked.length;
+  const total = manualSteps.length + linked.length;
   const completed = completeSteps + completedTasks;
   return { completed, total: Math.max(total, 1), percent: Math.round((completed / Math.max(total, 1)) * 100), linked };
 }
@@ -200,7 +214,7 @@ function renderGoals() {
   selectedGoalId = goal.id;
   const stats = goalProgress(goal);
   const taskSteps = stats.linked.map((task) => ({ id: task.id, name: `${task.emoji} ${task.title}`, done: Boolean(task.completedAt), note: task.completedAt ? '关联任务已完成' : `${shortDate(task.date)} ${task.time} 截止`, taskId: task.id }));
-  const steps = [...goal.steps.map((step) => ({ ...step, note: step.done ? '已完成' : '下一步' })), ...taskSteps];
+  const steps = [...goal.steps.filter((step) => !step.taskId).map((step) => ({ ...step, note: step.done ? '已完成' : '下一步' })), ...taskSteps];
   document.querySelector('#goals-page').innerHTML = `
     <div class="goal-tabs" aria-label="目标切换">${state.goals.map((item) => `<button class="goal-tab ${item.id === goal.id ? 'active' : ''}" type="button" data-goal="${item.id}">${escapeHTML(item.emoji)} ${escapeHTML(item.name)}</button>`).join('')}</div>
     <section class="goal-hero"><div class="goal-ring" style="background:conic-gradient(#9d78d8 0 ${stats.percent}%, rgba(255,255,255,.64) ${stats.percent}% 100%)"><b>${stats.percent}%</b></div><div><div class="goal-label">进行中 · 截止 ${shortDate(goal.dueDate)}</div><div class="goal-hero-name">${escapeHTML(goal.name)}</div><div class="goal-hero-meta">${stats.completed} / ${stats.total} 个小步骤已完成</div></div></section>
@@ -312,6 +326,8 @@ function openStepDialog() {
   if (!selectedGoalId) return;
   const form = document.querySelector('#step-form');
   form.reset();
+  form.elements.date.value = dateKey(new Date());
+  form.elements.time.value = '18:00';
   document.querySelector('#step-dialog').showModal();
 }
 
@@ -389,7 +405,8 @@ document.querySelector('#task-form').addEventListener('submit', (event) => {
 document.querySelector('#goal-form').addEventListener('submit', (event) => {
   event.preventDefault();
   const data = new FormData(event.currentTarget);
-  const goal = { id: uid('goal'), name: data.get('name').trim(), emoji: data.get('emoji'), dueDate: data.get('dueDate'), steps: [{ id: uid('step'), name: data.get('firstStep').trim(), done: false }] };
+  const goal = { id: uid('goal'), name: data.get('name').trim(), emoji: data.get('emoji'), dueDate: data.get('dueDate'), steps: [] };
+  state.tasks.push({ id: uid('task'), title: data.get('firstStep').trim(), date: dateKey(new Date()), time: '18:00', priority: 'normal', duration: 30, emoji: goal.emoji, goalIds: [goal.id], completedAt: null, createdAt: Date.now() });
   state.goals.push(goal);
   selectedGoalId = goal.id;
   saveState();
@@ -403,7 +420,7 @@ document.querySelector('#step-form').addEventListener('submit', (event) => {
   const goal = state.goals.find((item) => item.id === selectedGoalId);
   const data = new FormData(event.currentTarget);
   if (!goal || !data.get('name').trim()) return;
-  goal.steps.push({ id: uid('step'), name: data.get('name').trim(), done: false });
+  state.tasks.push({ id: uid('task'), title: data.get('name').trim(), date: data.get('date'), time: data.get('time'), priority: data.get('priority'), duration: Number(data.get('duration')), emoji: goal.emoji, goalIds: [goal.id], completedAt: null, createdAt: Date.now() });
   saveState();
   document.querySelector('#step-dialog').close();
   renderAll();
