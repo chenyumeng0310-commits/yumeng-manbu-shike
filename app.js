@@ -204,7 +204,7 @@ function renderGoals() {
   document.querySelector('#goals-page').innerHTML = `
     <div class="goal-tabs" aria-label="目标切换">${state.goals.map((item) => `<button class="goal-tab ${item.id === goal.id ? 'active' : ''}" type="button" data-goal="${item.id}">${escapeHTML(item.emoji)} ${escapeHTML(item.name)}</button>`).join('')}</div>
     <section class="goal-hero"><div class="goal-ring" style="background:conic-gradient(#9d78d8 0 ${stats.percent}%, rgba(255,255,255,.64) ${stats.percent}% 100%)"><b>${stats.percent}%</b></div><div><div class="goal-label">进行中 · 截止 ${shortDate(goal.dueDate)}</div><div class="goal-hero-name">${escapeHTML(goal.name)}</div><div class="goal-hero-meta">${stats.completed} / ${stats.total} 个小步骤已完成</div></div></section>
-    <div class="section-heading"><h2>下一步</h2><span class="tiny-text">还有 ${stats.total - stats.completed} 步</span></div>
+    <div class="section-heading"><h2>下一步</h2><button class="section-link" data-add-step type="button">添加步骤 ＋</button></div>
     <section class="step-list">${steps.length ? steps.map((step) => stepRow(step)).join('') : emptyState('从第一步开始吧', '点击右下角新增一个目标步骤。')}</section>`;
 }
 
@@ -308,6 +308,13 @@ function openGoalDialog() {
   goalDialog.showModal();
 }
 
+function openStepDialog() {
+  if (!selectedGoalId) return;
+  const form = document.querySelector('#step-form');
+  form.reset();
+  document.querySelector('#step-dialog').showModal();
+}
+
 function openSettings() {
   const form = document.querySelector('#settings-form');
   form.elements.morningTime.value = state.settings.morningTime;
@@ -364,6 +371,7 @@ document.addEventListener('click', (event) => {
   if (target.dataset.month) { calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + Number(target.dataset.month), 1); renderCalendar(); }
   if (target.dataset.level) renderReminders(target.dataset.level);
   if (target.dataset.goal) { selectedGoalId = target.dataset.goal; renderGoals(); }
+  if (target.dataset.addStep !== undefined) openStepDialog();
   if (target.dataset.closeDialog) document.querySelector(`#${target.dataset.closeDialog}`).close();
 });
 
@@ -390,6 +398,17 @@ document.querySelector('#goal-form').addEventListener('submit', (event) => {
   renderAll();
   showToast('新目标已经出发啦 ✦');
 });
+document.querySelector('#step-form').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const goal = state.goals.find((item) => item.id === selectedGoalId);
+  const data = new FormData(event.currentTarget);
+  if (!goal || !data.get('name').trim()) return;
+  goal.steps.push({ id: uid('step'), name: data.get('name').trim(), done: false });
+  saveState();
+  document.querySelector('#step-dialog').close();
+  renderAll();
+  showToast('新的小步骤已添加 ✦');
+});
 document.querySelector('#settings-form').addEventListener('submit', (event) => {
   event.preventDefault();
   const data = new FormData(event.currentTarget);
@@ -408,7 +427,9 @@ document.querySelector('#permission-button').addEventListener('click', async () 
 });
 
 window.addEventListener('beforeinstallprompt', (event) => { event.preventDefault(); installPrompt = event; });
-if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./service-worker.js'));
+if ('serviceWorker' in navigator) window.addEventListener('load', () => {
+  navigator.serviceWorker.register('./service-worker.js').then((registration) => registration.update());
+});
 window.addEventListener('focus', checkReminders);
 
 renderAll();
