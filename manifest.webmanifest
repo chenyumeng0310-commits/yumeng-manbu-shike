@@ -1,0 +1,13 @@
+{
+  "name": "Yumeng · 漫步时刻",
+  "short_name": "漫步时刻",
+  "description": "手机优先的个人任务与目标工作台",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fff7fb",
+  "theme_color": "#fff7fb",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
