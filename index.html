@@ -71,6 +71,14 @@
       <form class="modal-sheet" id="step-form" method="dialog">
         <div class="modal-heading"><h2>添加目标步骤</h2><button class="plain-close" data-close-dialog="step-dialog" type="button" aria-label="关闭">×</button></div>
         <label>这一步要做什么？<input name="name" placeholder="例如：完成日历页面的设计" required maxlength="80" /></label>
+        <div class="form-grid">
+          <label>日期<input name="date" type="date" required /></label>
+          <label>截止时间<input name="time" type="time" required /></label>
+        </div>
+        <div class="form-grid">
+          <label>紧急程度<select name="priority"><option value="urgent">紧急</option><option value="normal" selected>普通</option><option value="relaxed">不急</option></select></label>
+          <label>预计分钟<input name="duration" type="number" min="5" max="1440" value="30" required /></label>
+        </div>
         <button class="primary-button" type="submit" value="default">添加步骤</button>
       </form>
     </dialog>
