@@ -67,6 +67,14 @@
       </form>
     </dialog>
 
+    <dialog class="modal" id="step-dialog">
+      <form class="modal-sheet" id="step-form" method="dialog">
+        <div class="modal-heading"><h2>添加目标步骤</h2><button class="plain-close" data-close-dialog="step-dialog" type="button" aria-label="关闭">×</button></div>
+        <label>这一步要做什么？<input name="name" placeholder="例如：完成日历页面的设计" required maxlength="80" /></label>
+        <button class="primary-button" type="submit" value="default">添加步骤</button>
+      </form>
+    </dialog>
+
     <dialog class="modal" id="settings-dialog">
       <form class="modal-sheet" id="settings-form" method="dialog">
         <div class="modal-heading"><h2>提醒设置</h2><button class="plain-close" data-close-dialog="settings-dialog" type="button" aria-label="关闭">×</button></div>
