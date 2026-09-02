@@ -233,7 +233,7 @@ function formatRemaining(date, compact = false) {
 
 function setHeader(page) {
   const headers = {
-    today: ['早安，玉萌', '慢慢来，今天也会很顺利。'],
+    today: ['Yumeng，一步步来，会越来越棒！', '慢慢来，今天也会很顺利。'],
     calendar: ['日历', '点选日期，查看当天要做什么。'],
     reminders: ['时间提醒', '先看最临近截止时间的任务。'],
     goals: ['我的目标', '把大目标变成今天能完成的事。'],
