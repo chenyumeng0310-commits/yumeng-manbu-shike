@@ -445,7 +445,7 @@ document.querySelector('#permission-button').addEventListener('click', async () 
 
 window.addEventListener('beforeinstallprompt', (event) => { event.preventDefault(); installPrompt = event; });
 if ('serviceWorker' in navigator) window.addEventListener('load', () => {
-  navigator.serviceWorker.register('./service-worker.js').then((registration) => registration.update());
+  navigator.serviceWorker.register('./service-worker.js?v=20260903', { updateViaCache: 'none' }).then((registration) => registration.update());
 });
 window.addEventListener('focus', checkReminders);
 
